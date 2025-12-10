@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UA「会いにいこう」 – 旅と内省のミニマルな記録</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS: シンプルなデザインと動的要素の定義 */
+        :root {
+            --color-bg-light: #ffffff; 
+            --color-text-dark: #111111; 
+            --color-accent-gray: #444444; 
+            --font-serif: 'Shippori Mincho', serif; 
+            --font-sans: 'Noto Sans JP', sans-serif; 
+            --transition-duration: 0.7s; 
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* JSで動的に変更するため、初期値はCSS変数を使用しない */
+            background-color: #ffffff; 
+            color: var(--color-text-dark);
+            font-family: var(--font-sans);
+            line-height: 1.7;
+            word-break: break-word;
+            overflow-x: hidden;
+            font-size: 18px; 
+            position: relative; 
+            /* 背景色の変化を滑らかにするためのトランジションを追加 */
+            transition: background-color 0.1s linear; 
+        }
+        
+        /* スクロールアニメーションの基本設定 - よりシャープに */
+        .fade-in-text {
+            opacity: 0;
+            transform: translateY(20px); 
+            transition: opacity var(--transition-duration) ease-out, transform var(--transition-duration) ease-out;
+            transition-delay: var(--delay); 
+        }
+        .fade-in-text.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ループアニメーションの定義 */
+        @keyframes pulse-subtle {
+            0% { opacity: 0.8; }
+            50% { opacity: 1.0; }
+            100% { opacity: 0.8; }
+        }
+
+        /* 引用ブロック - シンプル化 */
+        .lyric-quote {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: 1.6rem;
+            margin: 100px 0;
+            padding: 50px 0;
+            border-top: 1px solid #dddddd; 
+            border-bottom: 1px solid #dddddd;
+            background-color: transparent;
+            color: var(--color-accent-gray); 
+            box-shadow: none;
+            text-align: center;
+        }
+
+        /* ヒーローセクション */
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            overflow: hidden;
+            color: var(--color-text-dark);
+            background-color: transparent; /* bodyの背景色を使う */
+            will-change: auto;
+        }
+
+        /* パララックス背景のコンテナ */
+        .parallax-background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        /* パララックス背景レイヤー */
+        .parallax-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            will-change: transform, opacity;
+        }
+
+        /* レイヤー1: 最も遠い背景 */
+        .parallax-layer-1 {
+            background-image: url('https://placehold.co/1920x1080/FFFFFF/111111?text=Minimal+Sky+Layer+1');
+            opacity: 0.1;
+        }
+        /* レイヤー2: 少し近い背景 */
+        .parallax-layer-2 {
+            background-image: url('https://placehold.co/1920x1080/FFFFFF/111111?text=Minimal+Sky+Layer+2');
+            opacity: 0.05; 
+        }
+
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-content h1 {
+            font-family: var(--font-serif);
+            font-size: 6rem; 
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            color: var(--color-text-dark);
+            text-shadow: none;
+        }
+
+        .hero-content .subtitle {
+            font-size: 1.8rem;
+            font-weight: 400;
+            font-family: var(--font-sans);
+            letter-spacing: 0.1em;
+            text-shadow: none;
+            animation: pulse-subtle 3s infinite ease-in-out; 
+            color: var(--color-accent-gray);
+        }
+
+        /* 記事本文のデザイン */
+        .content-container {
+            max-width: 800px; 
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        /* 本文セクションと見出しへのパララックス準備 */
+        .section {
+            will-change: transform; /* パフォーマンス最適化 */
+            transition: transform 0.1s linear; /* スムーズな動き */
+        }
+        .section-title {
+            font-family: var(--font-sans); 
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 80px 0 30px 0;
+            color: var(--color-text-dark);
+            border-left: none; 
+            border-bottom: 1px solid #dddddd; 
+            padding-bottom: 10px;
+            padding-left: 0;
+            will-change: transform; 
+            transition: transform 0.1s linear; /* スムーズな動き */
+        }
+
+        /* --- 記号アニメーションのスタイル (キラキラ記号) --- */
+        .symbol-animation-container {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            z-index: 0; 
+            opacity: 1.0; 
+        }
+
+        .animated-symbol {
+            position: absolute;
+            font-family: monospace; 
+            font-size: 1.4rem; 
+            color: #aaaaaa; 
+            opacity: 0;
+            animation: symbolFadeMove 7s infinite ease-in-out; 
+            transform: translateZ(0); 
+        }
+
+        @keyframes symbolFadeMove {
+            0% { opacity: 0; transform: translate(0, 0); }
+            30% { opacity: 0.7; } 
+            70% { opacity: 0.7; transform: translate(var(--move-x), var(--move-y)); } 
+            100% { opacity: 0; transform: translate(var(--move-x), var(--move-y)); }
+        }
+
+        /* --- キラキラ効果のスタイル (オーバーレイ) --- */
+        .sparkle-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1; 
+            overflow: hidden;
+            opacity: 0.15; 
+        }
+
+        .sparkle-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%; 
+            width: 250%; 
+            height: 100%;
+            
+            background: linear-gradient(
+                90deg, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(255, 255, 255, 0.5) 50%, 
+                rgba(255, 255, 255, 0) 100%
+            );
+            
+            transform: rotate(45deg); 
+            animation: sparkleSweep 15s infinite linear; 
+        }
+
+        @keyframes sparkleSweep {
+            0% { transform: translateX(-100vw) rotate(45deg); }
+            100% { transform: translateX(100vw) rotate(45deg); }
+        }
+        
+        /* --- 新幹線モチーフ（左右移動の光の軌跡）のスタイル --- */
+        .shinkansen-track-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -2; /* 最背面（キラキラオーバーレイの下） */
+            opacity: 0.25; 
+        }
+
+        .shinkansen-line {
+            position: absolute;
+            /* widthはJSで設定 */
+            height: 6px; 
+            
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0) 0%, 
+                rgba(200, 200, 200, 0.8) 10%, 
+                #ffffff 50%, /* 中心を白く強く */
+                rgba(200, 200, 200, 0.8) 90%, 
+                rgba(255, 255, 255, 0) 100%
+            );
+            
+            /* デフォルトのシャドウ: JSで上書きされる可能性あり */
+            box-shadow: 
+                0 0 15px 3px rgba(180, 180, 180, 1.0), 
+                0 0 60px 8px rgba(170, 170, 170, 0.6); 
+                
+            border-radius: 3px;
+            transform: skewX(-25deg); 
+            animation: travel 15s linear infinite; 
+        }
+
+        /* 左右移動のアニメーション */
+        @keyframes travel {
+            0% { transform: translateX(-150vw) skewX(-25deg); }
+            100% { transform: translateX(250vw) skewX(-25deg); } 
+        }
+        @keyframes travel-reverse {
+            0% { transform: translateX(250vw) scaleX(-1) skewX(25deg); }
+            100% { transform: translateX(-150vw) scaleX(-1) skewX(25deg); }
+        }
+        
+        /* --- フッターのスタイル修正 --- */
+        .footer {
+            max-width: 800px; 
+            margin: 100px auto 0; /* 上にスペースを空け、中央揃え */
+            padding: 60px 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--color-accent-gray);
+            border-top: 1px solid #dddddd; /* 上部との区切り線 */
+        }
+        .footer p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        /* スマートフォン対応（省略） */
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 3.5rem; }
+            .hero-content .subtitle { font-size: 1.2rem; }
+            .section-title { font-size: 1.8rem; }
+            .lyric-quote { font-size: 1.3rem; margin: 60px 0; padding: 40px 0; }
+            body { font-size: 16px; }
+            .advent-date { top: 20px; right: 20px; }
+            .footer { padding: 40px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- キラキラ効果のオーバーレイ --><div class="sparkle-overlay"></div>
+    <!-- 新幹線アニメーションのコンテナ --><div class="shinkansen-track-container"></div> 
+    <!-- 無駄な記号アニメーションのコンテナ --><div class="symbol-animation-container"></div>
+
+    <!-- I. イントロとキービジュアル --><header class="hero-section">
+        <!-- パララックス背景のコンテナ --><div class="parallax-background-container">
+            <div class="parallax-layer parallax-layer-1" id="parallax-layer-1"></div>
+            <div class="parallax-layer parallax-layer-2" id="parallax-layer-2"></div>
+        </div>
+        
+        <div class="hero-content fade-in">
+            <h1>UA「会いにいこう」</h1>
+            <p class="subtitle">— 旅と内省の記録</p>
+        </div>
+        
+        <div class="advent-date fade-in">
+            <span class="day-number">25</span>
+            <span class="month-year">DEC 2025</span>
+        </div>
+    </header>
+
+    <!-- II. 詩的な導入 --><main class="content-container">
+        
+        <div class="section-divider"></div>
+        
+        <section class="section intro-text">
+            <p class="fade-in-text">
+                ある日、突然、その曲は私の心に降りてきた。それは、賑やかな世界の片隅で、静かに、そして力強く、「旅」を促す声だった。UAの音楽が持つ、あの独特な浮遊感と大地に根差した力強さのブレンドは、まるで哲学的な問いかけのように、聴く者の深層意識に語りかけてくる。このアドベントカレンダーの記事を、その問いかけに応答する旅の記録としたい。
+            </p>
+            <p class="fade-in-text">
+                「会いにいこう」というシンプルなフレーズは、時として壮大な宇宙旅行のように響く。一体、誰に、何に、会いに行くというのだろうか。それは物理的な距離を超えた、自分自身との対話であり、他者という鏡を通して自己を再認識する試みかもしれない。この一篇は、その曖昧な、しかし避けがたい旅の記録である。
+            </p>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- III. 楽曲の解析/旅路 - セクション1 --><section class="section analysis-1">
+            <h2 class="section-title fade-in-text">1. 始まりの静けさと深淵</h2>
+            
+            <p class="fade-in-text">
+                イントロの数秒で、空気は一変する。UAさんの深く、響き渡る声が「会いにいこう」と歌い始める時、私たちは既に、どこか遠い場所へと連れ去られている。しかし、その「遠い場所」は、地図上の地点ではなく、感情の深淵、記憶の底にある風景だ。音楽は、私たちを過去へ、未来へ、あるいは、いまだ訪れたことのない可能性の地へと連れて行く。
+            </p>
+            <p class="fade-in-text">
+                彼女の歌声は、抑制されたドラムとミニマルなギターリフに乗せて、聴く者を焦らせる要素を一切持たない。それは、瞑想のような、静かな強さだ。まるで夜明け前の海辺に立っているような、あの研ぎ澄まされた孤独感。この孤独こそが、外の世界、そして内なる世界に「会いにいこう」とする強い動機となる。孤独は、旅の出発点であり、最高の羅針盤なのだ。
+            </p>
+            <p class="fade-in-text">
+                旅には準備が必要だが、この曲が要求するのは、心の準備だけだ。荷物はいらない。必要なのは、自己を解体し、再構築する勇気。そして、会いたいと願うその相手が、実は、過去や未来の自分自身かもしれないという、不確実性を受け入れる柔軟さである。
+            </p>
+            
+            <blockquote class="lyric-quote fade-in-text">
+                <p>どこまでも<br>会いにいこう</p>
+                <footer>— UA「会いにいこう」より</footer>
+            </blockquote>
+
+            <p class="fade-in-text">
+                歌詞の反復は、マントラのように響き、旅の意志を強化する。何度も繰り返される「会いにいこう」は、諦めではない、確固たる決意の表れだ。
+            </p>
+        </section>
+        
+        <div class="section-divider"></div>
+
+        <!-- III. 楽曲の解析/旅路 - セクション2 --><section class="section analysis-2">
+            <h2 class="section-title fade-in-text">2. 世界の広がりと、孤独の効用</h2>
+            <p class="fade-in-text">
+                深海のような静けさから、広がる空の果てへ。この曲は、聴くたびに新しい風景を見せてくれる。それぞれの音が、まるで旅の道標のように、私たちをどこまでも導いてくれるのだ。特に間奏部分の空間的な広がりは、無限の選択肢と、それを選ぶ人間の自由を象徴しているように感じられる。
+            </p>
+            <p class="fade-in-text">
+                人は孤独の中でこそ、真に他者を欲する。この曲の静謐なトーンは、現代社会の喧騒から私たちを切り離し、一時的に孤独な空間に置く。この**「孤独の効用」** を知ることで、初めて「会いにいこう」という行為が、社交辞令ではなく、魂の渇望に基づくものとなる。
+            </p>
+            <p class="fade-in-text">
+                音楽的な構造も、この旅を後押しする。最小限の音数で最大のエモーションを生み出す手腕は、**「必要なものだけを持って旅に出る」** というミニマリズムの哲学とも共鳴する。余計な装飾を削ぎ落とした先に残る、UAさんの声とシンプルなビートこそが、旅の真の目的地である。
+            </p>
+            <p class="fade-in-text">
+                この曲が描く旅は、目的地に到達することが目的ではない。むしろ、目的地に向かうプロセス、つまり**「会いたい」と願い続ける心の動き**こそが主題だ。それは、アドベントカレンダーの日々を待ち望む心理とも共通している。何かを心待ちにする静かな興奮、それがこの曲の核心にある。
+            </p>
+            <p class="fade-in-text">
+                私たちが日常で直面する葛藤や迷いは、この曲の旋律の中で一旦停止される。静かな水面に波紋が広がるように、内省の時間が訪れる。そして、その時間の中で、私たちは再び立ち上がり、「会いにいこう」という原動力を見つけ出す。
+            </p>
+            <p class="fade-in-text">
+                現代のデジタル化された世界では、私たちは常に誰かと繋がっているように見えるが、真の孤独は深まっている。UAの歌は、その孤独を恐れるな、むしろそれを力に変えろ、と静かに囁いている。旅は、常に自己との再会であり、真の繋がりを求める行為なのだ。
+            </p>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- IV. 結論/終着点 --><section class="section conclusion">
+            <h2 class="section-title fade-in-text">3. 旅の終着点、そして再出発</h2>
+            <p class="fade-in-text">
+                一曲を聴き終えた時、私たちは物理的に移動したわけではないが、感情的には遥か遠くまで旅をしてきた。この旅の終着点は、特定の場所ではなく、**「会いにいこう」という意志が固まった状態**、つまり、再出発の準備ができた状態である。
+            </p>
+            <p class="fade-in-text">
+                アドベントカレンダーのこの記事もまた、誰かに「会いにいこう」という思いで書かれたものだ。それは、UAの音楽を通じて、読者であるあなたに、そして自分自身に、語りかける試みである。
+            </p>
+            
+            <p class="center-text final-message fade-in-text">
+                この一曲を聴き終えた時、私たちは少しだけ、自分の中の道標を整理できた気がする。「会いにいこう」というシンプルな言葉に秘められた、壮大な決意と、深い優しさを。そして、旅はまた、始まる。
+            </p>
+        </section>
+
+    </main>
+
+    <!-- V. エピローグ --><footer class="footer">
+        <p>この記事は、[企画名] Advent Calendar 2025のXX日目の記事として公開されました。</p>
+        <p>&copy; 2025 [あなたの名前]. All rights reserved.</p>
+    </footer>
+    
+    <!-- JavaScript for scroll animations and dynamic elements --><script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Intersection Observer (フェードインアニメーションとディレイ設定) ---
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1 
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const children = entry.target.querySelectorAll('.fade-in-text');
+                        if (children.length > 0) {
+                            children.forEach((el, index) => {
+                                el.style.setProperty('--delay', `${index * 0.1}s`);
+                                el.classList.add('is-visible');
+                            });
+                        } else {
+                            entry.target.classList.add('is-visible');
+                        }
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // セクションと区切り線を監視対象に追加
+            const animatedElements = document.querySelectorAll('.section, .section-divider');
+            animatedElements.forEach(el => {
+                if (el.classList.contains('section')) {
+                    // セクション内のコンテンツをフェードイン対象にする
+                    el.querySelectorAll('h2, p, blockquote').forEach(child => {
+                        child.classList.add('fade-in-text');
+                    });
+                }
+                observer.observe(el);
+            });
+
+            const heroContent = document.querySelector('.hero-content');
+            const adventDate = document.querySelector('.advent-date');
+            
+            setTimeout(() => {
+                if (heroContent) heroContent.classList.add('is-visible');
+                if (adventDate) adventDate.style.opacity = '1';
+            }, 500); 
+
+            // --- 2. 背景と本文のパララックス処理 & 色変化処理 ---
+            const body = document.body;
+            const parallaxLayer1 = document.getElementById('parallax-layer-1');
+            const parallaxLayer2 = document.getElementById('parallax-layer-2');
+            const heroSection = document.querySelector('.hero-section');
+            const sections = document.querySelectorAll('.section');
+            
+            // HSLでの色変化の定義 (強調版)
+            const startHue = 0;          // 初期色相（白）
+            const endHue = 210;          // 最終色相（青みがかった色）
+            const startSaturation = 0;   // 初期彩度（無彩色）
+            const endSaturation = 20;    // 最終彩度（やや色付く）
+            const startLightness = 100;  // 初期明度（白）
+            const endLightness = 90;     // 最終明度（より暗くなる）
+            
+            // 色変化を完了させたいスクロール距離を短縮
+            const COLOR_TRANSITION_HEIGHT = 1500; 
+
+            /**
+             * スクロール位置に応じてボディの背景色を変化させる
+             */
+            function handleColorChange() {
+                const scrollY = window.scrollY;
+
+                // progress: 0 (トップ) から 1 (指定距離スクロール後)
+                let progress = Math.min(1, scrollY / COLOR_TRANSITION_HEIGHT);
+
+                // HSL値を補間
+                const currentHue = startHue + (endHue - startHue) * progress;
+                const currentSaturation = startSaturation + (endSaturation - startSaturation) * progress;
+                const currentLightness = startLightness + (endLightness - startLightness) * progress;
+
+                // 新しい背景色を適用
+                body.style.backgroundColor = `hsl(${currentHue}, ${currentSaturation}%, ${currentLightness}%)`;
+            }
+
+
+            function handleParallax() {
+                const scrollY = window.scrollY;
+                const viewportHeight = window.innerHeight;
+                const heroHeight = heroSection.offsetHeight;
+                
+                // ★ 背景色変化の呼び出し ★
+                handleColorChange();
+
+                // ヒーローセクションの背景パララックス
+                if (scrollY < heroHeight) {
+                    const progress = scrollY / heroHeight;
+
+                    // レイヤー1: よりゆっくり動かす
+                    const y1 = progress * 80; 
+                    // レイヤー2: 少し速く動かす
+                    const y2 = progress * 150; 
+
+                    if (parallaxLayer1) parallaxLayer1.style.transform = `translateY(${y1}px)`;
+                    if (parallaxLayer2) parallaxLayer2.style.transform = `translateY(${y2}px)`;
+                } else {
+                    // ヒーローセクションを抜けた後は固定
+                    if (parallaxLayer1) parallaxLayer1.style.transform = `translateY(80px)`;
+                    if (parallaxLayer2) parallaxLayer2.style.transform = `translateY(150px)`;
+                }
+
+                // 本文セクションへの微細なパララックス
+                sections.forEach((section) => {
+                    const rect = section.getBoundingClientRect();
+                    
+                    // 要素がビューポートの中央にあるときを基準点(0)とする
+                    const centerOffset = rect.top + rect.height / 2 - viewportHeight / 2;
+                    
+                    // 非常に小さな移動量に制限 (0.02倍の移動)
+                    const moveY = -centerOffset * 0.02; 
+                    
+                    section.style.transform = `translateY(${moveY}px)`;
+                });
+            }
+            window.addEventListener('scroll', handleParallax);
+            handleParallax(); // 初期位置設定
+
+            // --- 3. 余白部分の「無駄な記号アニメーション」 (調整済み) ---
+            const symbolContainer = document.querySelector('.symbol-animation-container');
+            const symbols = ['>', '<', '-', '+', '*', '§', '~', '°', '•', '∴']; 
+            const numSymbols = 60; // 記号の数を増加
+
+            function createSymbol() {
+                const symbol = document.createElement('span');
+                symbol.classList.add('animated-symbol');
+                symbol.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                // ランダムな位置
+                const posX = Math.random() * 100; 
+                const posY = Math.random() * 100; 
+                symbol.style.left = `${posX}%`;
+                symbol.style.top = `${posY}%`;
+                
+                // ランダムなアニメーション遅延と移動量 (範囲を広げる)
+                const delay = Math.random() * 5; 
+                const moveX = (Math.random() - 0.5) * 300; // -150pxから150px
+                const moveY = (Math.random() - 0.5) * 300; // -150pxから150px
+
+                symbol.style.animationDelay = `${delay}s`;
+                symbol.style.setProperty('--move-x', `${moveX}px`);
+                symbol.style.setProperty('--move-y', `${moveY}px`);
+
+                symbolContainer.appendChild(symbol);
+
+                // アニメーション終了後に削除し、新しい記号を生成（無限ループ）
+                symbol.addEventListener('animationend', () => {
+                    symbol.remove();
+                    createSymbol();
+                });
+            }
+
+            // 指定された数の記号を初期生成
+            for (let i = 0; i < numSymbols; i++) {
+                // 初期ロード時のちらつきを防ぐため、少しディレイをかけて生成
+                setTimeout(createSymbol, i * 50); 
+            }
+            
+            
+            // --- 4. 新幹線モチーフアニメーション (CSS/DOM生成) ---
+            const shinkansenContainer = document.querySelector('.shinkansen-track-container');
+            const NUM_SHINKANSEN = 3; // 光のラインの数を3に設定
+
+            function createShinkansenLine() {
+                const line = document.createElement('div');
+                line.classList.add('shinkansen-line');
+                
+                // ランダムな位置（垂直方向）
+                const startY = 5 + Math.random() * 90; // 画面上下5%を避ける
+                line.style.top = `${startY}vh`;
+
+                // ランダムな速度 (速さの逆数)
+                // 速度範囲を絞り、より速いものが多くなるように調整
+                const duration = 6 + Math.random() * 7; // 6秒から13秒
+                line.style.animationDuration = `${duration}s`;
+
+                // ランダムなディレイ
+                const delay = Math.random() * -duration; // マイナス値で最初から動き始めるように
+                line.style.animationDelay = `${delay}s`;
+
+                
+                let randomWidth = 1000 + Math.random() * 800; // Default: 1000px to 1800px (大幅に長くした)
+                let isExtraLong = false;
+                
+                // 15%の確率で非常に長いラインにする
+                if (Math.random() < 0.15) { 
+                    randomWidth = 2000 + Math.random() * 2000; // 2000pxから4000px (さらに長くした)
+                    isExtraLong = true;
+                }
+
+                line.style.width = `${randomWidth}px`;
+
+                // シャドウ設定
+                if (isExtraLong) {
+                    // 長いラインは特に明るく、強いシャドウを適用する
+                    line.style.boxShadow = `
+                        0 0 25px 8px rgba(255, 255, 255, 1.0),
+                        0 0 100px 15px rgba(200, 200, 200, 0.9)
+                    `;
+                }
+                // 通常ラインはCSSのデフォルトシャドウを使用
+
+                // 左右どちらかに動くようにする
+                if (Math.random() < 0.5) {
+                    // 左から右への移動 (デフォルト)
+                    line.style.animationName = 'travel';
+                } else {
+                    // 右から左への移動
+                    line.style.animationName = 'travel-reverse';
+                }
+
+                shinkansenContainer.appendChild(line);
+
+                // アニメーション終了後に削除し、新しいラインを生成（無限ループ）
+                line.addEventListener('animationend', () => {
+                    line.remove();
+                    createShinkansenLine();
+                });
+            }
+
+            // 指定された数のラインを初期生成
+            for (let i = 0; i < NUM_SHINKANSEN; i++) {
+                setTimeout(createShinkansenLine, i * 2000); // 初期生成のディレイを調整
+            }
+        });
+    </script>
+</body>
+</html>
